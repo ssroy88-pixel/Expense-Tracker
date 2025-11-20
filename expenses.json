@@ -1,0 +1,12 @@
+{
+    "expenses": [
+        {
+            "date": "2015-01-01",
+            "category": "Food",
+            "amount": 100.0
+        }
+    ],
+    "budget": {
+        "Personal": 1000.0
+    }
+}
