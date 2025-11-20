@@ -4,131 +4,208 @@ from datetime import datetime
 class ExpenseTracker:
     def __init__(self, filename="expenses.json"):
         self.filename = filename
-        self.expenses = []
-        self.budget = {}
+        self.data = {
+            "expenses": [],
+            "budgets": {}
+        }
         self.load_data()
 
-    # ---------------- File Handling ----------------
+    # -------------------- FILE HANDLING --------------------
     def save_data(self):
-        """Save expenses and budget to file."""
-        data = {
-            "expenses": self.expenses,
-            "budget": self.budget
-        }
         try:
             with open(self.filename, "w") as f:
-                json.dump(data, f, indent=4)
-            print("Data saved successfully.")
+                json.dump(self.data, f, indent=4)
+            print("✔ Auto-saved successfully.")
         except Exception as e:
-            print("Error saving data:", e)
+            print("Error saving file:", e)
 
     def load_data(self):
-        """Load expenses and budget from file."""
         try:
             with open(self.filename, "r") as f:
-                data = json.load(f)
-                self.expenses = data.get("expenses", [])
-                self.budget = data.get("budget", {})
-            print("Data loaded successfully.")
+                self.data = json.load(f)
+            print("Data loaded successfully!")
         except FileNotFoundError:
-            print("No existing data file found. Starting fresh.")
+            print("No previous data found. Starting fresh.")
         except Exception as e:
-            print("Error loading data:", e)
+            print("Error loading file:", e)
 
-    # ---------------- Expense Management ----------------
+    # -------------------- EXPENSE FUNCTIONS --------------------
     def add_expense(self):
-        """Add a new expense entry."""
         try:
-            amount = float(input("Enter expense amount: ₹"))
-            category = input("Enter category (e.g., Food, Travel, Bills): ").capitalize()
-            date = input("Enter date (YYYY-MM-DD) or leave blank for today: ")
-            if not date:
-                date = datetime.now().strftime("%Y-%m-%d")
+            amount = float(input("Enter amount: "))
+            category = input("Enter category (Food, Travel, etc.): ")
+            description = input("Enter description: ")
 
-            expense = {"date": date, "category": category, "amount": amount}
-            self.expenses.append(expense)
-            print(f"Expense added: {category} - ₹{amount}")
-        except ValueError:
-            print("Invalid input. Please enter a valid amount.")
+            today = datetime.now().strftime("%d-%m-%Y")
+            month_name = datetime.now().strftime("%B")
+
+            expense = {
+                "amount": amount,
+                "category": category,
+                "description": description,
+                "date": today,
+                "month": month_name
+            }
+
+            self.data["expenses"].append(expense)
+            print("Expense added successfully!")
+
+            # AUTO-SAVE
+            self.save_data()
+
+        except:
+            print("Invalid input. Try again.")
 
     def view_expenses(self):
-        """Display all expenses."""
-        if not self.expenses:
-            print("No expenses recorded yet.")
+        if not self.data["expenses"]:
+            print("No expenses found.")
             return
 
-        print("\nAll Recorded Expenses:")
-        for exp in self.expenses:
-            print(f"{exp['date']} | {exp['category']} | ₹{exp['amount']}")
-        print("-" * 40)
-        print(f"Total Spent: ₹{self.total_expenses()}")
+        print("\n---- All Expenses ----")
+        for i, exp in enumerate(self.data["expenses"], start=1):
+            print(f"{i}. {exp['date']} | {exp['category']} | Rs.{exp['amount']} | {exp['description']}")
 
-    def total_expenses(self):
-        """Calculate total spending."""
-        return sum(exp["amount"] for exp in self.expenses)
-
-    # ---------------- Budget Management ----------------
-    def set_budget(self):
-        """Set a monthly budget for each category."""
-        category = input("Enter category for budget: ").capitalize()
+    def delete_expense(self):
+        self.view_expenses()
         try:
-            amount = float(input(f"Enter monthly budget for {category}: "))
-            self.budget[category] = amount
-            print(f"Budget set for {category}: {amount}")
-        except ValueError:
-            print("Invalid amount. Try again.")
+            index = int(input("Enter the expense number to delete: "))
+            if 1 <= index <= len(self.data["expenses"]):
+                removed = self.data["expenses"].pop(index - 1)
+                print("Deleted:", removed)
 
-    def view_budget_status(self):
-        """Show spending vs. budget per category."""
-        if not self.budget:
-            print("No budgets set yet.")
-            return
+                # AUTO-SAVE
+                self.save_data()
 
-        print("\nBudget Summary:")
-        category_spend = {}
-        for exp in self.expenses:
-            cat = exp["category"]
-            category_spend[cat] = category_spend.get(cat, 0) + exp["amount"]
+            else:
+                print("Invalid number.")
+        except:
+            print("Invalid input.")
 
-        for cat, limit in self.budget.items():
-            spent = category_spend.get(cat, 0)
-            remaining = limit - spent
-            status = "Within budget" if remaining >= 0 else "Over budget!"
-            print(f"{cat}: Spent ₹{spent} / Budget ₹{limit} → {status}")
-        print("-" * 40)
+    def edit_expense(self):
+        self.view_expenses()
 
-    # ---------------- Menu Interface ----------------
+        try:
+            index = int(input("Enter the expense number to edit: "))
+            if not (1 <= index <= len(self.data["expenses"])):
+                print("Invalid choice.")
+                return
+
+            exp = self.data["expenses"][index - 1]
+            print("\nEditing Expense:")
+            print("Leave blank to keep old value.")
+
+            # Show existing values
+            print(f"Current Amount: {exp['amount']}")
+            print(f"Current Category: {exp['category']}")
+            print(f"Current Description: {exp['description']}\n")
+
+            new_amount = input("New Amount: ")
+            new_category = input("New Category: ")
+            new_desc = input("New Description: ")
+
+            # Apply edits
+            if new_amount.strip():
+                exp['amount'] = float(new_amount)
+            if new_category.strip():
+                exp['category'] = new_category
+            if new_desc.strip():
+                exp['description'] = new_desc
+
+            print("Expense updated successfully!")
+
+            # AUTO-SAVE
+            self.save_data()
+
+        except Exception as e:
+            print("Invalid input. Error:", e)
+
+    # -------------------- BUDGET FUNCTIONS --------------------
+    def set_monthly_budget(self):
+        month = input("Enter month name (e.g., January): ").capitalize()
+        try:
+            amount = float(input("Enter monthly budget: "))
+            self.data["budgets"][month] = amount
+            print(f"Budget set for {month}: Rs.{amount}")
+
+            # AUTO-SAVE
+            self.save_data()
+
+        except:
+            print("Invalid amount.")
+
+    def view_monthly_report(self):
+        month = input("Enter month name to view report: ").capitalize()
+
+        # Filter expenses for selected month
+        expenses = [exp for exp in self.data["expenses"] if exp["month"] == month]
+        total_spent = sum(exp["amount"] for exp in expenses)
+        budget = self.data["budgets"].get(month, None)
+
+        print("\n===== Monthly Report =====")
+        print(f"Month: {month}")
+        print(f"Total Spent: Rs.{total_spent}")
+
+        # ---------------- CATEGORY BREAKDOWN ----------------
+        print("\n--- Category-wise Breakdown ---")
+        if expenses:
+            category_summary = {}
+
+            for exp in expenses:
+                cat = exp["category"]
+                amt = exp["amount"]
+                if cat not in category_summary:
+                    category_summary[cat] = 0
+                category_summary[cat] += amt
+
+            for cat, amt in category_summary.items():
+                print(f"{cat}: Rs.{amt}")
+        else:
+            print("No expenses for this month.")
+
+        # ---------------- BUDGET COMPARISON ----------------
+        print("\n--- Budget Status ---")
+        if budget:
+            print(f"Budget: Rs.{budget}")
+            if total_spent > budget:
+                print("⚠️ You exceeded your budget!")
+            else:
+                print("✔ You are within the budget.")
+        else:
+            print("No budget set for this month.")
+
+    # -------------------- MAIN MENU --------------------
     def menu(self):
-        """Interactive menu-driven interface."""
         while True:
-            print("\n===== PERSONAL EXPENSE TRACKER =====")
+            print("\n===== Expense Tracker Menu =====")
             print("1. Add Expense")
             print("2. View Expenses")
-            print("3. Set Monthly Budget")
-            print("4. View Budget Status")
-            print("5. Save Data")
-            print("6. Exit")
-            choice = input("Choose an option (1-6): ")
+            print("3. Edit Expense")
+            print("4. Delete Expense")
+            print("5. Set Monthly Budget")
+            print("6. View Monthly Report")
+            print("7. Exit")
+
+            choice = input("Enter your choice: ")
 
             if choice == "1":
                 self.add_expense()
             elif choice == "2":
                 self.view_expenses()
             elif choice == "3":
-                self.set_budget()
+                self.edit_expense()
             elif choice == "4":
-                self.view_budget_status()
+                self.delete_expense()
             elif choice == "5":
-                self.save_data()
+                self.set_monthly_budget()
             elif choice == "6":
-                self.save_data()
-                print("Exiting... Have a great day!")
+                self.view_monthly_report()
+            elif choice == "7":
+                print("Exiting...")
                 break
             else:
-                print("Invalid choice. Please select 1-6.")
+                print("Invalid choice. Try again.")
 
 
-# ---------------- Main Program ----------------
-if __name__ == "__main__":
-    tracker = ExpenseTracker()
-    tracker.menu()
+# -------------------- RUN THE PROGRAM --------------------
+tracker = ExpenseTracker()
+tracker.menu()

@@ -1,12 +1,15 @@
 {
     "expenses": [
         {
-            "date": "2015-01-01",
+            "amount": 250.0,
             "category": "Food",
-            "amount": 100.0
+            "description": "Chilli paneer",
+            "date": "20-11-2025",
+            "month": "November"
         }
     ],
-    "budget": {
-        "Personal": 1000.0
+    "budgets": {
+        "November": 1000.0,
+        "October": 2000.0
     }
 }
