@@ -6,10 +6,25 @@
             "description": "Chilli paneer",
             "date": "20-11-2025",
             "month": "November"
+        },
+        {
+            "amount": 100.0,
+            "category": "Food",
+            "description": "paneer",
+            "date": "22-11-2025",
+            "month": "November"
+        },
+        {
+            "amount": 1000.0,
+            "category": "Travel",
+            "description": "Goa",
+            "date": "10-10-2025",
+            "month": "October"
         }
     ],
     "budgets": {
         "November": 1000.0,
-        "October": 2000.0
+        "October": 2000.0,
+        "December": 1000.0
     }
 }

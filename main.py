@@ -36,14 +36,33 @@ class ExpenseTracker:
             category = input("Enter category (Food, Travel, etc.): ")
             description = input("Enter description: ")
 
-            today = datetime.now().strftime("%d-%m-%Y")
-            month_name = datetime.now().strftime("%B")
+            # Ask user for date
+            date_input = input("Enter date (DD-MM-YYYY) or press Enter for today: ")
 
+            if date_input.strip() == "":
+                # Use today's date
+                date_str = datetime.now().strftime("%d-%m-%Y")
+            else:
+                # Validate and parse entered date
+                try:
+                    date_obj = datetime.strptime(date_input, "%d-%m-%Y")
+                    date_str = date_obj.strftime("%d-%m-%Y")
+                except:
+                    print("Invalid date format! Use DD-MM-YYYY.")
+                    return
+
+            # Extract month name from entered date
+            if date_input.strip() == "":
+                month_name = datetime.now().strftime("%B")
+            else:
+                month_name = date_obj.strftime("%B")
+
+            # Create the expense entry
             expense = {
                 "amount": amount,
                 "category": category,
                 "description": description,
-                "date": today,
+                "date": date_str,
                 "month": month_name
             }
 
@@ -53,8 +72,8 @@ class ExpenseTracker:
             # AUTO-SAVE
             self.save_data()
 
-        except:
-            print("Invalid input. Try again.")
+        except Exception as e:
+            print("Error adding expense:", e)
 
     def view_expenses(self):
         if not self.data["expenses"]:
@@ -136,7 +155,7 @@ class ExpenseTracker:
     def view_monthly_report(self):
         month = input("Enter month name to view report: ").capitalize()
 
-        # Filter expenses for selected month
+        # Filter expenses for that month
         expenses = [exp for exp in self.data["expenses"] if exp["month"] == month]
         total_spent = sum(exp["amount"] for exp in expenses)
         budget = self.data["budgets"].get(month, None)
@@ -145,7 +164,7 @@ class ExpenseTracker:
         print(f"Month: {month}")
         print(f"Total Spent: Rs.{total_spent}")
 
-        # ---------------- CATEGORY BREAKDOWN ----------------
+        # ----------- CATEGORY BREAKDOWN -----------
         print("\n--- Category-wise Breakdown ---")
         if expenses:
             category_summary = {}
@@ -153,23 +172,25 @@ class ExpenseTracker:
             for exp in expenses:
                 cat = exp["category"]
                 amt = exp["amount"]
-                if cat not in category_summary:
-                    category_summary[cat] = 0
-                category_summary[cat] += amt
+                category_summary[cat] = category_summary.get(cat, 0) + amt
 
             for cat, amt in category_summary.items():
                 print(f"{cat}: Rs.{amt}")
         else:
             print("No expenses for this month.")
 
-        # ---------------- BUDGET COMPARISON ----------------
+        # ----------- BUDGET SUMMARY -----------
         print("\n--- Budget Status ---")
         if budget:
+            remaining = budget - total_spent
+
             print(f"Budget: Rs.{budget}")
-            if total_spent > budget:
-                print("⚠️ You exceeded your budget!")
+            print(f"Remaining Balance: Rs.{remaining}")
+
+            if remaining < 0:
+                print("You exceeded your budget!")
             else:
-                print("✔ You are within the budget.")
+                print("You are within the budget.")
         else:
             print("No budget set for this month.")
 
